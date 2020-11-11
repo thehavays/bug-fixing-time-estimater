@@ -1,10 +1,9 @@
 # This script shows how to use the client in anonymous mode
 # against jira.atlassian.com.
-import json
 
-from jira import JIRA
-from datetime import datetime
 from elasticsearch import Elasticsearch
+from jira import JIRA
+from collections import Counter
 
 es = Elasticsearch()
 
@@ -41,7 +40,7 @@ def send_query(count):
         startAt=count,
         maxResults=1000,
         validate_query=True,
-        fields="issuetype, summary, status, resolution, created, updated, estimated, priority, description,"
+        fields="issuetype, summary, status, resolution, created, updated, resolved, estimated, priority, description,"
                "assignee, "
                "labels",
         expand="",
@@ -49,10 +48,17 @@ def send_query(count):
     )
 
 
-def search(key):
+def search_by_summary(key):
     json_array = []
-    res = es.search(index="project", body={"query": {'match': {'fields.summary': key}}}, size=1000)
-    print("Got %d Hits:" % res['hits']['total']['value'])
+    res = es.search(index="project", body={"query": {'match': {'fields.summary': key}}}, size=10000)
+    for hit in res['hits']['hits']:
+        json_array.append(hit["_source"])
+    return json_array
+
+
+def search_by_id(key):
+    json_array = []
+    res = es.search(index="project", body={"query": {'match': {'_id': key}}}, size=1)
     for hit in res['hits']['hits']:
         json_array.append(hit["_source"])
     return json_array
@@ -69,14 +75,27 @@ def get_words(text):
     return text.split()
 
 
-words = get_words("NPE query verify")
+words = get_words("NPE query data key the of product")
+
+big_array = []
 
 for word in words:
-    json_array_result = search(word)
-    print(word, "\t", get_result_ids(json_array_result))
+    json_array_result = search_by_summary(word)
+    big_array.extend(get_result_ids(json_array_result))
+    print(len(big_array))
 
-# get_result_ids(search("NPE"))
-# search("query")
+counter = Counter(big_array)
+print(len(big_array))
+
+# most_common()
+most_common_element = counter.most_common(5)
+print(most_common_element)
+
+for n in most_common_element:
+    print(search_by_id(n[0])[0]['fields']['summary'])
+
+get_result_ids(search_by_summary("NPE"))
+search_by_summary("query")
 
 # for i in range(34):
 #     result = send_query(i*1000)
