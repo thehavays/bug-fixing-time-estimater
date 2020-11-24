@@ -49,6 +49,31 @@ class PostgresAdapter:
     def add_issue(self, issue):
         self.cursor.execute(self.issue_insert_query(issue))
 
+    def get_issues_by_rate(self, rate):
+        rate = rate / 10
+        query = f"SELECT * FROM issues ORDER BY created DESC LIMIT (SELECT (count(*) / 10 * {rate})" \
+                f" AS selnum FROM issues);"
+
+        self.cursor.execute(query)
+        return self.cursor.fetchall()
+
+    def get_issue_count_by_rate(self, rate):
+        rate = rate / 10
+        query = f"SELECT count(*) from(SELECT * FROM issues ORDER BY created DESC " \
+                f"LIMIT (SELECT (count( *) / 10 * {rate}) AS selnum FROM issues)) as sub;"
+
+        self.cursor.execute(query)
+        return self.cursor.fetchall()
+
+    def get_issue_fixed_time(self, id):
+        query = f"SELECT resolved-created FROM issues WHERE id = {id}::varchar;"
+
+        self.cursor.execute(query)
+        result = self.cursor.fetchall()
+        # TODO: return 0 if result empty
+        time_delta = result[0][0]
+        return time_delta.total_seconds()
+
     def issue_insert_query(self, row_issue):
 
         id = None if row_issue['id'] is None else row_issue['id']
@@ -62,13 +87,17 @@ class PostgresAdapter:
         label = None if row_issue['fields']['labels'] is None else row_issue['fields']['labels']
         resolution = None if row_issue['fields']['resolution'] is None else row_issue['fields']['resolution']['name']
         assignee = None if row_issue['fields']['assignee'] is None else row_issue['fields']['assignee']['name']
-        resolved = None
+        resolved = None if row_issue['fields']['resolutiondate'] is None else row_issue['fields']['resolutiondate']
 
         query = """INSERT INTO issues ( id, summary, status, key, resolution, created, updated, resolved, \
-        estimated, issueType, priority, assignee, labels) VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"""
+                estimated, issueType, priority, assignee, labels) VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"""
 
         record_to_insert = (id, summary, status, key, resolution, created, updated, resolved,
                             None, issueType, priority, assignee, label)
+
+        # query = f"INSERT INTO issues ( id, summary, status, key, resolution, created, updated, resolved, \
+        #         issueType, priority, assignee, labels) VALUES({issue_id}, {summary}, {status}, {key}, \
+        #         {resolution}, {created}, {updated}, {resolved},{issueType}, {priority}, {assignee}, {label});"
 
         self.cursor.execute(query, record_to_insert)
         self.connection.commit()
