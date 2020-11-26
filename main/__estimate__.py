@@ -1,6 +1,5 @@
 from collections import Counter
-import json
-import sys
+from sklearn.metrics import mean_squared_error
 import dataclasses
 
 from main.ElasticsearchAdapter import ElasticsearchAdapter
@@ -138,3 +137,11 @@ for x in range(3):
         estimate_strategy_three_fixed_times.append(strategy_three_fixed_time)
         estimate_strategy_four_fixed_times.append(strategy_four_fixed_time)
         estimate_strategy_five_fixed_times.append(strategy_five_fixed_time)
+
+    print("Mean square error for one = ", mean_squared_error(actual_fixed_times, estimate_strategy_one_fixed_times))
+    print("Mean square error for two = ", mean_squared_error(actual_fixed_times, estimate_strategy_two_fixed_times))
+    print("Mean square error for three = ", mean_squared_error(actual_fixed_times, estimate_strategy_three_fixed_times))
+    print("Mean square error for four = ", mean_squared_error(actual_fixed_times, estimate_strategy_four_fixed_times))
+    print("Mean square error for five = ", mean_squared_error(actual_fixed_times, estimate_strategy_five_fixed_times))
+
+    print("Step for %", (x + 1) * 10, "test and %", (9 - x) * 10, "train data", " completed!")
