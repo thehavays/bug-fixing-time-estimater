@@ -41,12 +41,10 @@ class JiraWrapper:
         chunk_size = 500
         while True:
             chunk = self.jira.search_issues(f'project = {project_name}', startAt=i, maxResults=chunk_size,
-                                            fields="issuetype, summary, status, resolution,"
-                                                   "created, updated, resolved, estimated, priority, "
-                                                   "description, assignee, labels",
                                             json_result=True)
             i += len(chunk['issues'])
             issues += chunk['issues']
+            print(len(issues))
             if chunk_size > len(chunk['issues']):
                 break
         return issues

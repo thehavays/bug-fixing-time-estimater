@@ -12,7 +12,17 @@ class ElasticsearchAdapter:
 
     def search_by_summary(self, key):
         json_array = []
-        res = self.es.search(index="project", body={"query": {'match': {'fields.summary': key}}}, size=10000)
+        res = self.es.search(index="project", body={
+            "query": {
+                "dis_max": {
+                    "queries": [
+                        {"match": {"fields.summary": key}}
+                    ],
+                    "tie_breaker": 0.3
+                }
+            }
+        },
+                             size=10000)
         for hit in res['hits']['hits']:
             json_array.append(hit["_source"])
         return json_array
