@@ -53,6 +53,8 @@ def get_most_common(issue, is_cluster, is_assignee):
 def get_arithmetic_mean(most_common):
     total_second = 0
     count = 0
+    if len(most_common) == 0:
+        return 0
     for element in most_common:
         time = get_fixed_time(element[0])
         if time != 0:
@@ -64,6 +66,8 @@ def get_arithmetic_mean(most_common):
 def get_weighted_mean(most_common):
     total_second = 0
     count = 0
+    if len(most_common) == 0:
+        return 0
     for element in most_common:
         element_id = element[0]
         element_count = element[1]
@@ -113,9 +117,10 @@ for x in range(3):
 
     for issue in test:
         var = Issue(issue)
-        most_common_clustered = get_most_common(var, is_cluster=True, is_assignee=False)
+
         most_common = get_most_common(var, is_cluster=False, is_assignee=False)
         most_common_assignee = get_most_common(var, is_cluster=True, is_assignee=True)
+        most_common_clustered = get_most_common(var, is_cluster=True, is_assignee=False)
 
         fixed_time = get_fixed_time(var.id)
         strategy_one_fixed_time = estimate_strategy_one(most_common)
