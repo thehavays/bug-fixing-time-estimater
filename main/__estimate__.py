@@ -1,9 +1,11 @@
-from collections import Counter
-from sklearn.metrics import mean_squared_error
 import dataclasses
+from collections import Counter
+
+import matplotlib.pyplot as plot
+import numpy as np
+from sklearn.metrics import mean_squared_error
 
 from main.ElasticsearchAdapter import ElasticsearchAdapter
-
 from main.PostgresAdapter import PostgresAdapter
 
 elasticsearchAdapter = ElasticsearchAdapter()
@@ -105,6 +107,18 @@ estimate_strategy_three_fixed_times = []
 estimate_strategy_four_fixed_times = []
 estimate_strategy_five_fixed_times = []
 
+
+def plot_regression(train, pred):
+    test_x = np.array(train)
+    pred_y = np.array(pred)
+    plot.plot(test_x, pred_y, 'o')
+
+    m, b = np.polyfit(test_x, pred_y, 1)
+
+    plot.plot(test_x, m * test_x + b)
+    plot.show()
+
+
 for x in range(3):
     actual_fixed_times.clear()
     estimate_strategy_one_fixed_times.clear()
@@ -148,5 +162,11 @@ for x in range(3):
     print("Mean square error for three = ", mean_squared_error(actual_fixed_times, estimate_strategy_three_fixed_times))
     print("Mean square error for four = ", mean_squared_error(actual_fixed_times, estimate_strategy_four_fixed_times))
     print("Mean square error for five = ", mean_squared_error(actual_fixed_times, estimate_strategy_five_fixed_times))
+
+    plot_regression(actual_fixed_times, estimate_strategy_one_fixed_times)
+    plot_regression(actual_fixed_times, estimate_strategy_two_fixed_times)
+    plot_regression(actual_fixed_times, estimate_strategy_three_fixed_times)
+    plot_regression(actual_fixed_times, estimate_strategy_four_fixed_times)
+    plot_regression(actual_fixed_times, estimate_strategy_five_fixed_times)
 
     print("Step for %", (x + 1) * 10, "test and %", (9 - x) * 10, "train data", " completed!")
