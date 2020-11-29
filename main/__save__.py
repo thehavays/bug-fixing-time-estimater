@@ -23,4 +23,6 @@ for issue in issues:
         elasticsearchAdapter.add_document(issue)
         postgresAdapter.issue_insert_query(issue)
 
+postgresAdapter.normalize_dates()
+
 print("Saving finished!")

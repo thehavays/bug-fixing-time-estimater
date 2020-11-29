@@ -49,6 +49,13 @@ class PostgresAdapter:
     def add_issue(self, issue):
         self.cursor.execute(self.issue_insert_query(issue))
 
+    def normalize_dates(self):
+        query = "UPDATE issues SET created = created + INTERVAL '2000' YEAR" \
+                "WHERE created::DATE <= '2000-01-01 00:00:00.000000'::DATE;"
+
+        self.cursor.execute(query)
+        return self.cursor.fetchall()
+
     def get_issues_by_rate(self, rate):
         rate = rate / 10
         query = f"SELECT * FROM issues ORDER BY created DESC LIMIT (SELECT (count(*) / 10 * {rate})" \
