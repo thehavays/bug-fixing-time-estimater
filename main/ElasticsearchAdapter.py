@@ -16,42 +16,246 @@ class ElasticsearchAdapter:
         if is_cluster and is_assignee:
             query = {
                 "query": {
-                    "dis_max": {
-                        "queries": [
-                            {"match": {"fields.summary": key}},
-                            {"match": {"fields.assignee.name": issue.assignee}},
-                            {"match": {"fields.issuetype.name": issue.type}},
-                            {"match": {"fields.priority.name": issue.priority}},
-                            {"match": {"fields.resolution.name": "Fixed"}}
+                    "bool": {
+                        "must": [],
+                        "filter": [
+                            {
+                                "bool": {
+                                    "filter": [
+                                        {
+                                            "bool": {
+                                                "should": [
+                                                    {
+                                                        "match": {
+                                                            "fields.summary": key
+                                                        }
+                                                    }
+                                                ],
+                                                "minimum_should_match": 1
+                                            }
+                                        },
+                                        {
+                                            "bool": {
+                                                "filter": [
+                                                    {
+                                                        "bool": {
+                                                            "should": [
+                                                                {
+                                                                    "match": {
+                                                                        "fields.priority.name": issue.priority
+                                                                    }
+                                                                }
+                                                            ],
+                                                            "minimum_should_match": 1
+                                                        }
+                                                    },
+                                                    {
+                                                        "bool": {
+                                                            "filter": [
+                                                                {
+                                                                    "bool": {
+                                                                        "should": [
+                                                                            {
+                                                                                "match": {
+                                                                                    "fields.issuetype.name": issue.type
+                                                                                }
+                                                                            }
+                                                                        ],
+                                                                        "minimum_should_match": 1
+                                                                    }
+                                                                },
+                                                                {
+                                                                    "bool": {
+                                                                        "filter": [
+                                                                            {
+                                                                                "bool": {
+                                                                                    "should": [
+                                                                                        {
+                                                                                            "match": {
+                                                                                                "fields.resolution.name": "Fixed"
+                                                                                            }
+                                                                                        }
+                                                                                    ],
+                                                                                    "minimum_should_match": 1
+                                                                                }
+                                                                            },
+                                                                            {
+                                                                                "bool": {
+                                                                                    "should": [
+                                                                                        {
+                                                                                            "match": {
+                                                                                                "fields.assignee.name": issue.assignee
+                                                                                            }
+                                                                                        }
+                                                                                    ],
+                                                                                    "minimum_should_match": 1
+                                                                                }
+                                                                            }
+                                                                        ]
+                                                                    }
+                                                                }
+                                                            ]
+                                                        }
+                                                    }
+                                                ]
+                                            }
+                                        }
+                                    ]
+                                }
+                            }
                         ],
-                        "tie_breaker": 0.3
+                        "should": [],
+                        "must_not": []
                     }
                 }
             }
         elif is_cluster and not is_assignee:
             query = {
                 "query": {
-                    "dis_max": {
-                        "queries": [
-                            {"match": {"fields.summary": key}},
-                            {"match": {"fields.issuetype.name": issue.type}},
-                            {"match": {"fields.priority.name": issue.priority}},
-                            {"match": {"fields.resolution.name": "Fixed"}}
+                    "bool": {
+                        "must": [],
+                        "filter": [
+                            {
+                                "bool": {
+                                    "filter": [
+                                        {
+                                            "bool": {
+                                                "should": [
+                                                    {
+                                                        "match": {
+                                                            "fields.summary": key
+                                                        }
+                                                    }
+                                                ],
+                                                "minimum_should_match": 1
+                                            }
+                                        },
+                                        {
+                                            "bool": {
+                                                "filter": [
+                                                    {
+                                                        "bool": {
+                                                            "should": [
+                                                                {
+                                                                    "match": {
+                                                                        "fields.priority.name": issue.priority
+                                                                    }
+                                                                }
+                                                            ],
+                                                            "minimum_should_match": 1
+                                                        }
+                                                    },
+                                                    {
+                                                        "bool": {
+                                                            "filter": [
+                                                                {
+                                                                    "bool": {
+                                                                        "should": [
+                                                                            {
+                                                                                "match": {
+                                                                                    "fields.issuetype.name": issue.type
+                                                                                }
+                                                                            }
+                                                                        ],
+                                                                        "minimum_should_match": 1
+                                                                    }
+                                                                },
+                                                                {
+                                                                    "bool": {
+                                                                        "filter": [
+                                                                            {
+                                                                                "bool": {
+                                                                                    "should": [
+                                                                                        {
+                                                                                            "match": {
+                                                                                                "fields.resolution.name": "Fixed"
+                                                                                            }
+                                                                                        }
+                                                                                    ],
+                                                                                    "minimum_should_match": 1
+                                                                                }
+                                                                            }
+                                                                        ]
+                                                                    }
+                                                                }
+                                                            ]
+                                                        }
+                                                    }
+                                                ]
+                                            }
+                                        }
+                                    ]
+                                }
+                            }
                         ],
-                        "tie_breaker": 0.3
+                        "should": [],
+                        "must_not": []
                     }
                 }
             }
         elif not is_cluster and is_assignee:
             query = {
                 "query": {
-                    "dis_max": {
-                        "queries": [
-                            {"match": {"fields.summary": key}},
-                            {"match": {"fields.assignee.name": issue.assignee}},
-                            {"match": {"fields.resolution.name": "Fixed"}}
+                    "bool": {
+                        "must": [],
+                        "filter": [
+                            {
+                                "bool": {
+                                    "filter": [
+                                        {
+                                            "bool": {
+                                                "should": [
+                                                    {
+                                                        "match": {
+                                                            "fields.summary": key
+                                                        }
+                                                    }
+                                                ],
+                                                "minimum_should_match": 1
+                                            }
+                                        },
+                                        {
+                                            "bool": {
+                                                "filter": [
+                                                    {
+                                                        "bool": {
+                                                            "should": [
+                                                                {
+                                                                    "match": {
+                                                                        "fields.assignee.name": issue.assignee
+                                                                    }
+                                                                }
+                                                            ],
+                                                            "minimum_should_match": 1
+                                                        }
+                                                    },
+                                                    {
+                                                        "bool": {
+                                                            "filter": [
+                                                                {
+                                                                    "bool": {
+                                                                        "should": [
+                                                                            {
+                                                                                "match": {
+                                                                                    "fields.resolution.name": "Fixed"
+                                                                                }
+                                                                            }
+                                                                        ],
+                                                                        "minimum_should_match": 1
+                                                                    }
+                                                                }
+                                                            ]
+                                                        }
+                                                    }
+                                                ]
+                                            }
+                                        }
+                                    ]
+                                }
+                            }
                         ],
-                        "tie_breaker": 0.3
+                        "should": [],
+                        "must_not": []
                     }
                 }
             }
