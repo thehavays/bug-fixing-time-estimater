@@ -176,7 +176,7 @@ for x in range(3):
 
     test = postgresAdapter.get_issues_by_rate((x + 1) * 10)
 
-    for issue in test[:200]:
+    for issue in test:
         var = Issue(issue)
 
         most_common = get_most_common(var, is_cluster=False, is_assignee=False)
