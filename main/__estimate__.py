@@ -38,66 +38,67 @@ def get_result_ids(json_array):
     return id_list
 
 
-def get_fixed_time(id):
-    return postgresAdapter.get_issue_fixed_time(id)
+def get_fixed_time(issue_id):
+    return postgresAdapter.get_issue_fixed_time(issue_id)
 
 
-def get_most_common(issue, is_cluster, is_assignee):
+def get_array_fixed_time(issue_id_array):
+    return postgresAdapter.get_issue_array_fixed_time(issue_id_array)
+
+
+def get_most_common(searched_issue, is_cluster, is_assignee):
     big_array = []
-    for word in issue.words:
-        json_array_result = elasticsearchAdapter.search_by_summary(word, is_cluster, is_assignee, issue)
+    for word in searched_issue.words:
+        json_array_result = elasticsearchAdapter.search_by_summary(word, is_cluster, is_assignee, searched_issue)
         temp = get_result_ids(json_array_result)
         big_array.extend(temp)
     counter = Counter(big_array)
     return counter.most_common(10)
 
 
-def get_arithmetic_mean(most_common):
+def get_mean(most_common, is_weighted):
     total_second = 0
     count = 0
     if len(most_common) == 0:
         return 0
-    for element in most_common:
-        time = get_fixed_time(element[0])
-        if time != 0:
-            count = count + 1
-            total_second += time
-    return total_second / count
 
+    fixed_times = get_array_fixed_time(most_common)
 
-def get_weighted_mean(most_common):
-    total_second = 0
-    count = 0
-    if len(most_common) == 0:
-        return 0
-    for element in most_common:
-        element_id = element[0]
-        element_count = element[1]
-        time = get_fixed_time(element_id)
+    dict1 = dict(most_common)
+    dict2 = dict(fixed_times)
+    lst3 = [(k, dict1[k], dict2[k]) for k in sorted(dict1)]
+
+    for element in lst3:
+        repetition_count = element[1]
+        time = element[2].total_seconds()
         if time != 0:
-            count = count + element_count
-            total_second += time * element_count
+            if is_weighted:
+                total_second += time * repetition_count
+                count += repetition_count
+            else:
+                total_second += time
+                count += 1
     return total_second / count
 
 
 def estimate_strategy_one(most_common):
-    return get_arithmetic_mean(most_common)
+    return get_mean(most_common, is_weighted=False)
 
 
 def estimate_strategy_two(most_common):
-    return get_weighted_mean(most_common)
+    return get_mean(most_common, is_weighted=True)
 
 
 def estimate_strategy_three(most_common):
-    return get_weighted_mean(most_common)
+    return get_mean(most_common, is_weighted=True)
 
 
 def estimate_strategy_four(most_common):
-    return get_arithmetic_mean(most_common)
+    return get_mean(most_common, is_weighted=False)
 
 
 def estimate_strategy_five(most_common):
-    return get_weighted_mean(most_common)
+    return get_mean(most_common, is_weighted=True)
 
 
 actual_fixed_times = []
