@@ -1,9 +1,11 @@
-from collections import Counter
-from sklearn.metrics import mean_squared_error
 import dataclasses
+from collections import Counter
+
+import matplotlib.pyplot as plot
+import numpy as np
+from sklearn.metrics import mean_squared_error
 
 from main.ElasticsearchAdapter import ElasticsearchAdapter
-
 from main.PostgresAdapter import PostgresAdapter
 
 elasticsearchAdapter = ElasticsearchAdapter()
@@ -36,66 +38,67 @@ def get_result_ids(json_array):
     return id_list
 
 
-def get_fixed_time(id):
-    return postgresAdapter.get_issue_fixed_time(id)
+def get_fixed_time(issue_id):
+    return postgresAdapter.get_issue_fixed_time(issue_id)
 
 
-def get_most_common(issue, is_cluster, is_assignee):
+def get_array_fixed_time(issue_id_array):
+    return postgresAdapter.get_issue_array_fixed_time(issue_id_array)
+
+
+def get_most_common(searched_issue, is_cluster, is_assignee):
     big_array = []
-    for word in issue.words:
-        json_array_result = elasticsearchAdapter.search_by_summary(word, is_cluster, is_assignee, issue)
+    for word in searched_issue.words:
+        json_array_result = elasticsearchAdapter.search_by_summary(word, is_cluster, is_assignee, searched_issue)
         temp = get_result_ids(json_array_result)
         big_array.extend(temp)
     counter = Counter(big_array)
     return counter.most_common(10)
 
 
-def get_arithmetic_mean(most_common):
+def get_mean(most_common, is_weighted):
     total_second = 0
     count = 0
     if len(most_common) == 0:
         return 0
-    for element in most_common:
-        time = get_fixed_time(element[0])
-        if time != 0:
-            count = count + 1
-            total_second += time
-    return total_second / count
 
+    fixed_times = get_array_fixed_time(most_common)
 
-def get_weighted_mean(most_common):
-    total_second = 0
-    count = 0
-    if len(most_common) == 0:
-        return 0
-    for element in most_common:
-        element_id = element[0]
-        element_count = element[1]
-        time = get_fixed_time(element_id)
+    dict1 = dict(most_common)
+    dict2 = dict(fixed_times)
+    lst3 = [(k, dict1[k], dict2[k]) for k in sorted(dict1)]
+
+    for element in lst3:
+        repetition_count = element[1]
+        time = element[2].total_seconds()
         if time != 0:
-            count = count + element_count
-            total_second += time * element_count
+            if is_weighted:
+                total_second += time * repetition_count
+                count += repetition_count
+            else:
+                total_second += time
+                count += 1
     return total_second / count
 
 
 def estimate_strategy_one(most_common):
-    return get_arithmetic_mean(most_common)
+    return get_mean(most_common, is_weighted=False)
 
 
 def estimate_strategy_two(most_common):
-    return get_weighted_mean(most_common)
+    return get_mean(most_common, is_weighted=True)
 
 
 def estimate_strategy_three(most_common):
-    return get_weighted_mean(most_common)
+    return get_mean(most_common, is_weighted=True)
 
 
 def estimate_strategy_four(most_common):
-    return get_arithmetic_mean(most_common)
+    return get_mean(most_common, is_weighted=False)
 
 
 def estimate_strategy_five(most_common):
-    return get_weighted_mean(most_common)
+    return get_mean(most_common, is_weighted=True)
 
 
 actual_fixed_times = []
@@ -104,6 +107,18 @@ estimate_strategy_two_fixed_times = []
 estimate_strategy_three_fixed_times = []
 estimate_strategy_four_fixed_times = []
 estimate_strategy_five_fixed_times = []
+
+
+def plot_regression(train, pred):
+    test_x = np.array(train)
+    pred_y = np.array(pred)
+    plot.plot(test_x, pred_y, 'o')
+
+    m, b = np.polyfit(test_x, pred_y, 1)
+
+    plot.plot(test_x, m * test_x + b)
+    plot.show()
+
 
 for x in range(3):
     actual_fixed_times.clear()
@@ -148,5 +163,11 @@ for x in range(3):
     print("Mean square error for three = ", mean_squared_error(actual_fixed_times, estimate_strategy_three_fixed_times))
     print("Mean square error for four = ", mean_squared_error(actual_fixed_times, estimate_strategy_four_fixed_times))
     print("Mean square error for five = ", mean_squared_error(actual_fixed_times, estimate_strategy_five_fixed_times))
+
+    plot_regression(actual_fixed_times, estimate_strategy_one_fixed_times)
+    plot_regression(actual_fixed_times, estimate_strategy_two_fixed_times)
+    plot_regression(actual_fixed_times, estimate_strategy_three_fixed_times)
+    plot_regression(actual_fixed_times, estimate_strategy_four_fixed_times)
+    plot_regression(actual_fixed_times, estimate_strategy_five_fixed_times)
 
     print("Step for %", (x + 1) * 10, "test and %", (9 - x) * 10, "train data", " completed!")

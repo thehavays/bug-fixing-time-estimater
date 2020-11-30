@@ -77,9 +77,22 @@ class PostgresAdapter:
 
         self.cursor.execute(query)
         result = self.cursor.fetchall()
-        # TODO: return 0 if result empty
+        if len(result) == 0:
+            return 0
         time_delta = result[0][0]
         return time_delta.total_seconds()
+
+    def get_issue_array_fixed_time(self, element_array):
+        where_clause = ""
+        for element in element_array[:-1]:
+            where_clause = where_clause + f"id = {element[0]}::varchar" + " or "
+        where_clause += f"id = {element_array[-1][0]}::varchar"
+
+        query = f"SELECT id, resolved-created FROM issues WHERE {where_clause};"
+
+        self.cursor.execute(query)
+        result = self.cursor.fetchall()
+        return result
 
     def issue_insert_query(self, row_issue):
 
