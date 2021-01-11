@@ -197,7 +197,9 @@ for x in range(3):
                        "four": strategy_four_fixed_time,
                        "five": strategy_five_fixed_time,
                        "six": strategy_six_fixed_time}
-        print(result_json)
+
+        with open('result.txt', 'a+') as file:
+            file.write(str(result_json) + "\n")
 
         if fixed_time != 0:
             if strategy_one_fixed_time != 0:
